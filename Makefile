@@ -9,7 +9,7 @@ TARGET := $(BUILD_DIR)/main
 SRCS := $(wildcard $(SRC_DIR)/*.c)
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
-.PHONY: all clean run debug help docker-build docker-shell
+.PHONY: all clean run debug help docker-build docker-up docker-shell docker-down
 
 all: $(TARGET)
 
@@ -38,12 +38,20 @@ help:
 	@echo "  make debug    - build with -g -O0"
 	@echo "  make clean    - remove build artifacts"
 	@echo ""
-	@echo "Docker:"
+	@echo "Docker (手順1: up -d + exec で同一コンテナに2シェル):"
 	@echo "  make docker-build  - build image"
-	@echo "  make docker-shell  - start container shell"
+	@echo "  make docker-up     - start container in background"
+	@echo "  make docker-shell  - exec into running container"
+	@echo "  make docker-down   - stop container"
 
 docker-build:
 	docker compose build
 
+docker-up:
+	docker compose up -d
+
 docker-shell:
-	docker compose run --rm dev
+	docker compose exec dev bash
+
+docker-down:
+	docker compose down

@@ -7,3 +7,4 @@ services:
     working_dir: /workspace
     stdin_open: true
     tty: true
+    command: sleep infinity
