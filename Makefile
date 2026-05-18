@@ -6,10 +6,13 @@ SRC_DIR := src
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/main
 
-SRCS := $(wildcard $(SRC_DIR)/*.c)
+# pointer_demo.c は main を持つ別プログラムのため通常ビルドから除外
+SRCS := $(filter-out $(SRC_DIR)/pointer_demo.c, $(wildcard $(SRC_DIR)/*.c))
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
-.PHONY: all clean run debug help docker-build docker-up docker-shell docker-down
+POINTER_TARGET := $(BUILD_DIR)/pointer_demo
+
+.PHONY: all clean run debug pointer pointer-run help docker-build docker-up docker-shell docker-down
 
 all: $(TARGET)
 
@@ -25,6 +28,14 @@ $(BUILD_DIR):
 run: $(TARGET)
 	./$(TARGET)
 
+pointer: $(POINTER_TARGET)
+
+$(POINTER_TARGET): $(SRC_DIR)/pointer_demo.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $<
+
+pointer-run: pointer
+	./$(POINTER_TARGET)
+
 debug: CFLAGS += -g -O0
 debug: clean all
 
@@ -34,9 +45,11 @@ clean:
 help:
 	@echo "Usage:"
 	@echo "  make          - build build/main"
-	@echo "  make run      - build and run"
-	@echo "  make debug    - build with -g -O0"
-	@echo "  make clean    - remove build artifacts"
+	@echo "  make run          - build and run hello (build/main)"
+	@echo "  make pointer      - build pointer demo"
+	@echo "  make pointer-run  - build and run pointer demo"
+	@echo "  make debug        - build with -g -O0"
+	@echo "  make clean        - remove build artifacts"
 	@echo ""
 	@echo "Docker (手順1: up -d + exec で同一コンテナに2シェル):"
 	@echo "  make docker-build  - build image"
