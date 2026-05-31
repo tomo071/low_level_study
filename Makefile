@@ -1,18 +1,20 @@
 CC      := gcc
-CFLAGS  := -Wall -Wextra -Wpedantic -std=c11
+CFLAGS  := -Wall -Wextra -Wpedantic -std=c11 -Iinclude
 LDFLAGS :=
 
 SRC_DIR := src
 BUILD_DIR := build
 TARGET := $(BUILD_DIR)/main
 
-# pointer_demo.c は main を持つ別プログラムのため通常ビルドから除外
-SRCS := $(filter-out $(SRC_DIR)/pointer_demo.c, $(wildcard $(SRC_DIR)/*.c))
+# pointer_demo / diff_tool は main を持つ別プログラムのため通常ビルドから除外
+DIFF_SRCS := $(SRC_DIR)/diff_main.c $(SRC_DIR)/diff_reader.c $(SRC_DIR)/diff_lcs.c $(SRC_DIR)/diff_writer.c
+SRCS := $(filter-out $(SRC_DIR)/pointer_demo.c $(DIFF_SRCS), $(wildcard $(SRC_DIR)/*.c))
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRCS))
 
 POINTER_TARGET := $(BUILD_DIR)/pointer_demo
+DIFF_TARGET := $(BUILD_DIR)/diff_tool
 
-.PHONY: all clean run debug pointer pointer-run help docker-build docker-up docker-shell docker-down
+.PHONY: all clean run debug pointer pointer-run diff diff-run help docker-build docker-up docker-shell docker-down
 
 all: $(TARGET)
 
@@ -36,6 +38,16 @@ $(POINTER_TARGET): $(SRC_DIR)/pointer_demo.c | $(BUILD_DIR)
 pointer-run: pointer
 	./$(POINTER_TARGET)
 
+diff: $(DIFF_TARGET)
+
+$(DIFF_TARGET): $(DIFF_SRCS) | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ $(DIFF_SRCS)
+
+diff-run: diff
+	./$(DIFF_TARGET) test/old.txt test/new.txt -o $(BUILD_DIR)/changes.txt
+	@echo "--- $(BUILD_DIR)/changes.txt ---"
+	@cat $(BUILD_DIR)/changes.txt
+
 debug: CFLAGS += -g -O0
 debug: clean all
 
@@ -48,6 +60,8 @@ help:
 	@echo "  make run          - build and run hello (build/main)"
 	@echo "  make pointer      - build pointer demo"
 	@echo "  make pointer-run  - build and run pointer demo"
+	@echo "  make diff         - build diff_tool"
+	@echo "  make diff-run     - build diff_tool and run sample diff"
 	@echo "  make debug        - build with -g -O0"
 	@echo "  make clean        - remove build artifacts"
 	@echo ""
